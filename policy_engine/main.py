@@ -93,7 +93,9 @@ parser.add_argument('--ou_noise', type=bool, default=True,
                     help="This is the noise used for the pure version DDPG (without poly_rl_exploration)"
                          " where the behavioural policy has perturbation in only mean of target policy")
 
-parser.add_argument('--param_noise', type=bool, default=True)
+parser.add_argument('--param_noise', type=bool, default=False)
+
+parser.add_argument('--diverse_noise', type=bool, default=True)
 
 parser.add_argument('--noise_scale', type=float, default=0.3, metavar='G',
                     help='initial noise scale (default: 0.3)')
@@ -141,7 +143,8 @@ logging.getLogger().addHandler(logging.StreamHandler())
 logger.info("=================================================================================")
 Config_exeriment = "\n Experiment Configuration:\n*Algorithm: " + str(args.algo) + "\n*Output_path result: " + \
                    str(args.output_path) + "\n*Param noise Flag: " + \
-                   str(args.param_noise) +"\n*sparse_reward: " + str(
+                   str(args.param_noise)  + "\n*Diverse noise Flag: " + \
+                   str(args.diverse_noise) +"\n*sparse_reward: " + str(
     args.sparse_reward) + "\n*Environment Name: " + str(
     args.env_name) + \
                    "\n*Gamma " + str(args.gamma) + "\n*Max episode steps length: " + str(
@@ -178,7 +181,7 @@ else:
     agent = DDPG(gamma=args.gamma, tau=args.tau, hidden_size=args.hidden_size,
                  poly_rl_exploration_flag=args.poly_rl_exploration_flag,
                  num_inputs=env.observation_space.shape[0], action_space=env.action_space,
-                 lr_actor=args.lr_actor, lr_critic=args.lr_critic)
+                 lr_actor=args.lr_actor, lr_critic=args.lr_critic,diversity_noise=args.diversity_noise)
 
 poly_rl_alg = None
 
@@ -260,6 +263,13 @@ for i_episode in range(args.num_episodes):
         perturbed_actions = torch.cat([transition[1] for transition in episode_transitions], 0)
 
         ddpg_dist = ddpg_distance_metric(perturbed_actions.numpy(), unperturbed_actions.numpy())
+        param_noise.adapt(ddpg_dist)
+
+    if args.diverse_noise:
+        episode_transitions = memory.memory[memory.position - counter:memory.position]
+        states = torch.cat([transition[0] for transition in episode_transitions], 0)
+        actions = torch.cat([transition[0] for transition in episode_transitions], 0)
+        agent.update_diverse_exploration_policy(states, actions)
         param_noise.adapt(ddpg_dist)
 
     # This section is for computing the target policy perfomance

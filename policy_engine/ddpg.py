@@ -2,6 +2,7 @@ import sys
 
 import numpy as np
 import torch
+from policy_engine.div_ddpg_actor import DivDDPGActor
 import torch.nn as nn
 from torch.optim import Adam
 from torch.optim import SGD
@@ -108,15 +109,21 @@ class Critic(nn.Module):
         return V
 
 class DDPG(object):
-    def __init__(self, gamma, tau, hidden_size, poly_rl_exploration_flag,num_inputs, action_space,lr_critic,lr_actor):
+    def __init__(self, gamma, tau, hidden_size, poly_rl_exploration_flag,num_inputs, action_space,lr_critic,lr_actor,diversity_noise):
 
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.poly_rl_alg=None
+        self.diversity_noise=diversity_noise
         self.num_inputs = num_inputs
         self.action_space = action_space
         self.poly_rl_exploration_flag=poly_rl_exploration_flag
         self.actor = Actor(hidden_size, self.num_inputs, self.action_space).to(self.device)
         self.actor_perturbed = Actor(hidden_size, self.num_inputs, self.action_space).to(self.device)
+        self.actor_diverse =None
+        if self.diversity_noise:
+            self.actor_diverse=DivDDPGActor(gamma=gamma, tau=tau, hidden_size=hidden_size,
+                 num_inputs=self.num_inputs, action_space=self.action_space,
+                 lr_actor=lr_actor, lr_critic=lr_critic)
         self.actor_target = Actor(hidden_size, self.num_inputs, self.action_space).to(self.device)
         self.actor_optim = SGD(self.actor.parameters(), lr=lr_actor, momentum=0.9)
         self.critic = Critic(hidden_size, self.num_inputs, self.action_space).to(self.device)
@@ -135,6 +142,9 @@ class DDPG(object):
             self.actor.eval()
             if param_noise is not None:
                 mu = self.actor_perturbed((Variable(state)))
+            elif self.diversity_noise is True:
+                self.actor_diverse.eval()
+                mu=self.actor_diverse((Variable(state)))
             else:
                 mu = self.actor((Variable(state)))
             self.actor.train()
@@ -163,7 +173,7 @@ class DDPG(object):
         mu = self.actor_target((Variable(state).to(self.device)))
         self.actor_target.train()
         mu = mu.data
-        return mu
+        return mu.clamp(-1, 1)
 
 
 
