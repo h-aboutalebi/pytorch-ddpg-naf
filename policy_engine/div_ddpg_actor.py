@@ -173,9 +173,11 @@ class DivDDPGActor(object):
 
         #updating actor network
         self.actor_optim.zero_grad()
-        self.alpha=self.alpha*0.9
+        self.alpha=self.alpha*0.99999
         policy_loss = -self.critic((state_batch),self.actor((state_batch)))
-        policy_loss = policy_loss.mean()-self.alpha*distance_diverse
+        policy_loss_mean=policy_loss.mean()
+        policy_loss = policy_loss_mean-self.alpha*distance_diverse
+        # logger.info("policy loss: {}| distance div: {}| alpha: {}".format(policy_loss_mean,distance_diverse,self.alpha))
         policy_loss.backward()
         clip_grad_norm_(self.actor.parameters(), 0.5)
         self.actor_optim.step()
