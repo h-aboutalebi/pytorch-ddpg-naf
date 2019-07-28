@@ -276,7 +276,6 @@ for i_episode in range(args.num_episodes):
         counter = 0
         while (counter < args.num_steps):
             action = agent.select_action_from_target_actor(state)
-            print(action)
             next_state, reward, done, _ = env.step(action.cpu().numpy()[0])
             episode_reward += reward
             modified_reward, flag_absorbing_state = make_reward_sparse(env=env, flag_sparse=args.sparse_reward, reward=reward,
