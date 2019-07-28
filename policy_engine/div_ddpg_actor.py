@@ -128,6 +128,7 @@ class DivDDPGActor(object):
 
     #This is where the behavioural policy is called
     def select_action(self, state, tensor_board_writer,step_number,action_noise=None,previous_action=None, param_noise=None):
+        self.actor.eval()
         mu = self.actor((Variable(state)))
         self.actor.train()
         mu = mu.data
@@ -144,7 +145,7 @@ class DivDDPGActor(object):
 
 
 
-    def update_parameters(self, batch,tensor_board_writer,episode_number,delta=0.0002):
+    def update_parameters(self, batch,tensor_board_writer,episode_number,delta=0.02):
         state_batch = Variable(torch.cat(batch.state)).to(self.device)
         action_batch = Variable(torch.cat(batch.action)).to(self.device)
         reward_batch = Variable(torch.cat(batch.reward)).to(self.device)
@@ -154,7 +155,7 @@ class DivDDPGActor(object):
         next_state_action_values = self.critic_target(next_state_batch, next_action_batch)
         reward_batch = reward_batch.unsqueeze(1)
         mask_batch = mask_batch.unsqueeze(1)
-        distance_diverse=torch.sum(torch.clamp(torch.sqrt(torch.sum(torch.clamp(action_batch-self.actor(state_batch),-delta,delta)**2,dim=1)),-delta,delta))
+        distance_diverse=(torch.sqrt(torch.sum(torch.clamp(action_batch-self.actor(state_batch),-delta,delta)**2,dim=1))).mean()
         #We may need to change the following line for speed up (cuda to cpu operation)
         number_of_samples=state_batch.shape[0]
         expected_state_action_batch = reward_batch + (self.gamma * mask_batch * next_state_action_values)
