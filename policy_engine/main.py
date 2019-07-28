@@ -23,7 +23,7 @@ import os
 from policy_engine.mod_reward import *
 from policy_engine.poly_rl import *
 from policy_engine.ddpg import DDPG
-from policy_engine.naf import NAF
+from policy_engine.div_ddpg_actor import *
 from policy_engine.param_noise import *
 from policy_engine.normalized_actions import NormalizedActions
 from policy_engine.ounoise import OUNoise
@@ -93,9 +93,9 @@ parser.add_argument('--ou_noise', type=bool, default=True,
                     help="This is the noise used for the pure version DDPG (without poly_rl_exploration)"
                          " where the behavioural policy has perturbation in only mean of target policy")
 
-parser.add_argument('--param_noise', type=bool, default=False)
+parser.add_argument('--param_noise', action='store_true')
 
-parser.add_argument('--diverse_noise', type=bool, default=True)
+parser.add_argument('--diverse_noise', action='store_true')
 
 parser.add_argument('--noise_scale', type=float, default=0.3, metavar='G',
                     help='initial noise scale (default: 0.3)')
@@ -124,7 +124,7 @@ parser.add_argument('--epsilon', type=float, default=0.999)
 
 parser.add_argument('--sigma_squared', type=float, default=0.00007)
 
-parser.add_argument('--lambda_', type=float, default=0.087)
+parser.add_argument('--lambda_', type=float, default=0.035)
 
 # retrieve arguments set by the user
 args = parser.parse_args()
@@ -174,14 +174,16 @@ torch.manual_seed(args.seed)
 np.random.seed(args.seed)
 
 # currently we only support DDPG. TODO: implement other algorithms for future
-if args.algo == "NAF":
-    agent = NAF(args.gamma, args.tau, args.hidden_size,
-                env.observation_space.shape[0], env.action_space)
+if args.diverse_noise is True:
+    agent = DivDDPGActor(gamma=args.gamma, tau=args.tau, hidden_size=args.hidden_size,
+                 num_inputs=env.observation_space.shape[0], action_space=env.action_space,
+                 lr_actor=args.lr_actor, lr_critic=args.lr_critic)
+
 else:
     agent = DDPG(gamma=args.gamma, tau=args.tau, hidden_size=args.hidden_size,
                  poly_rl_exploration_flag=args.poly_rl_exploration_flag,
                  num_inputs=env.observation_space.shape[0], action_space=env.action_space,
-                 lr_actor=args.lr_actor, lr_critic=args.lr_critic,diversity_noise=args.diversity_noise)
+                 lr_actor=args.lr_actor, lr_critic=args.lr_critic)
 
 poly_rl_alg = None
 
@@ -265,13 +267,6 @@ for i_episode in range(args.num_episodes):
         ddpg_dist = ddpg_distance_metric(perturbed_actions.numpy(), unperturbed_actions.numpy())
         param_noise.adapt(ddpg_dist)
 
-    if args.diverse_noise:
-        episode_transitions = memory.memory[memory.position - counter:memory.position]
-        states = torch.cat([transition[0] for transition in episode_transitions], 0)
-        actions = torch.cat([transition[0] for transition in episode_transitions], 0)
-        agent.update_diverse_exploration_policy(states, actions)
-        param_noise.adapt(ddpg_dist)
-
     # This section is for computing the target policy perfomance
     # The environment is reset every 10 episodes automatically and we compute the target policy reward.
     if i_episode % 10 == 0:
@@ -281,6 +276,7 @@ for i_episode in range(args.num_episodes):
         counter = 0
         while (counter < args.num_steps):
             action = agent.select_action_from_target_actor(state)
+            print(action)
             next_state, reward, done, _ = env.step(action.cpu().numpy()[0])
             episode_reward += reward
             modified_reward, flag_absorbing_state = make_reward_sparse(env=env, flag_sparse=args.sparse_reward, reward=reward,

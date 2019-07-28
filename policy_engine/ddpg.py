@@ -109,21 +109,16 @@ class Critic(nn.Module):
         return V
 
 class DDPG(object):
-    def __init__(self, gamma, tau, hidden_size, poly_rl_exploration_flag,num_inputs, action_space,lr_critic,lr_actor,diversity_noise):
+    def __init__(self, gamma, tau, hidden_size, poly_rl_exploration_flag,num_inputs, action_space,lr_critic,lr_actor):
 
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.poly_rl_alg=None
-        self.diversity_noise=diversity_noise
         self.num_inputs = num_inputs
         self.action_space = action_space
         self.poly_rl_exploration_flag=poly_rl_exploration_flag
         self.actor = Actor(hidden_size, self.num_inputs, self.action_space).to(self.device)
         self.actor_perturbed = Actor(hidden_size, self.num_inputs, self.action_space).to(self.device)
         self.actor_diverse =None
-        if self.diversity_noise:
-            self.actor_diverse=DivDDPGActor(gamma=gamma, tau=tau, hidden_size=hidden_size,
-                 num_inputs=self.num_inputs, action_space=self.action_space,
-                 lr_actor=lr_actor, lr_critic=lr_critic)
         self.actor_target = Actor(hidden_size, self.num_inputs, self.action_space).to(self.device)
         self.actor_optim = SGD(self.actor.parameters(), lr=lr_actor, momentum=0.9)
         self.critic = Critic(hidden_size, self.num_inputs, self.action_space).to(self.device)
@@ -142,9 +137,6 @@ class DDPG(object):
             self.actor.eval()
             if param_noise is not None:
                 mu = self.actor_perturbed((Variable(state)))
-            elif self.diversity_noise is True:
-                self.actor_diverse.eval()
-                mu=self.actor_diverse((Variable(state)))
             else:
                 mu = self.actor((Variable(state)))
             self.actor.train()
@@ -155,7 +147,8 @@ class DDPG(object):
 
             return mu.clamp(-1, 1)
         else:
-            return self.poly_rl_alg.select_action(state,previous_action,tensor_board_writer=tensor_board_writer,step_number=step_number)
+            mu=self.poly_rl_alg.select_action(state,previous_action,tensor_board_writer=tensor_board_writer,step_number=step_number)
+            return mu.clamp(-1, 1)
 
     def perturb_actor_parameters(self, param_noise):
         """Apply parameter noise to actor model, for exploration"""
