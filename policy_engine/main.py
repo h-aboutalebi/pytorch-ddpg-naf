@@ -182,7 +182,7 @@ torch.manual_seed(args.seed)
 np.random.seed(args.seed)
 
 # currently we only support DDPG. TODO: implement other algorithms for future
-if args.diverse_noise is True:
+if args.diverse_noise is True or args.linear_diverse_noise is True:
     agent = DivDDPGActor(gamma=args.gamma, tau=args.tau, hidden_size=args.hidden_size,
                  num_inputs=env.observation_space.shape[0], action_space=env.action_space,
                  lr_actor=args.lr_actor, lr_critic=args.lr_critic,phi=args.phi,linear_flag=args.linear_diverse_noise)
