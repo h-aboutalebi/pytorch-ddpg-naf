@@ -108,8 +108,10 @@ class Critic(nn.Module):
         return V
 
 class DivDDPGActor(object):
-    def __init__(self, gamma, tau, hidden_size, num_inputs, action_space,lr_critic,lr_actor):
+    def __init__(self, gamma, tau, hidden_size, num_inputs, action_space,lr_critic,lr_actor,phi=0.999,linear_flag=False):
         self.alpha=1
+        self.linear_flag=linear_flag
+        self.phi=phi
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.poly_rl_alg=None
         self.num_inputs = num_inputs
@@ -173,7 +175,8 @@ class DivDDPGActor(object):
 
         #updating actor network
         self.actor_optim.zero_grad()
-        # self.alpha=self.alpha*0.99999
+        if(self.linear_flag):
+            self.alpha=self.alpha*self.phi
         policy_loss = -self.critic((state_batch),self.actor((state_batch)))
         policy_loss_mean=policy_loss.mean()
         policy_loss = policy_loss_mean-self.alpha*distance_diverse

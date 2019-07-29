@@ -93,9 +93,6 @@ parser.add_argument('--ou_noise', type=bool, default=True,
                     help="This is the noise used for the pure version DDPG (without poly_rl_exploration)"
                          " where the behavioural policy has perturbation in only mean of target policy")
 
-parser.add_argument('--param_noise', action='store_true')
-
-parser.add_argument('--diverse_noise', action='store_true')
 
 parser.add_argument('--noise_scale', type=float, default=0.3, metavar='G',
                     help='initial noise scale (default: 0.3)')
@@ -105,6 +102,15 @@ parser.add_argument('--final_noise_scale', type=float, default=0.3, metavar='G',
 
 parser.add_argument('--poly_rl_exploration_flag', action='store_true',
                     help='for using poly_rl exploration. Default=False')
+
+parser.add_argument('--param_noise', action='store_true')
+
+parser.add_argument('--diverse_noise', action='store_true')
+
+parser.add_argument('--linear_diverse_noise', action='store_true')
+
+parser.add_argument('--phi', type=float, default=0.99)
+
 
 parser.add_argument('--exploration_end', type=int, default=100, metavar='N',
                     help='number of episodes with noise (default: 100)')
@@ -143,7 +149,9 @@ logging.getLogger().addHandler(logging.StreamHandler())
 logger.info("=================================================================================")
 Config_exeriment = "\n Experiment Configuration:\n*Algorithm: " + str(args.algo) + "\n*Output_path result: " + \
                    str(args.output_path) + "\n*Param noise Flag: " + \
-                   str(args.param_noise)  + "\n*Diverse noise Flag: " + \
+                   str(args.param_noise) + "\n*linear_diverse_noise Flag: " + \
+                   str(args.linear_diverse_noise)+ "\n*linear_diverse_noise phi: " + \
+                   str(args.phi) + "\n*Diverse noise Flag: " + \
                    str(args.diverse_noise) +"\n*sparse_reward: " + str(
     args.sparse_reward) + "\n*Environment Name: " + str(
     args.env_name) + \
@@ -177,7 +185,7 @@ np.random.seed(args.seed)
 if args.diverse_noise is True:
     agent = DivDDPGActor(gamma=args.gamma, tau=args.tau, hidden_size=args.hidden_size,
                  num_inputs=env.observation_space.shape[0], action_space=env.action_space,
-                 lr_actor=args.lr_actor, lr_critic=args.lr_critic)
+                 lr_actor=args.lr_actor, lr_critic=args.lr_critic,phi=args.phi,linear_flag=args.linear_diverse_noise)
 
 else:
     agent = DDPG(gamma=args.gamma, tau=args.tau, hidden_size=args.hidden_size,
