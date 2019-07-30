@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="275bd72a-31c0-4d3e-8ba3-391217ad23cf" name="mila_gomrokchi" url="http://login-1.server.mila.quebec">
+        <fileTransfer host="login-1.server.mila.quebec" port="8001" accessType="SFTP">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+          <option name="port" value="8001" />
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>

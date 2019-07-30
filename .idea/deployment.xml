@@ -1,25 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" autoUpload="Always" showNewOnTargetInSync="false">
+  <component name="PublishConfigData" autoUpload="Always" serverName="samin11@agent-server-2.cs.mcgill.ca:22" showNewOnTargetInSync="false">
     <serverData>
-      <paths name="DL0@192.168.20.101">
+      <paths name="gomrokma@login-1.server.mila.quebec:8001">
         <serverdata>
           <mappings>
-            <mapping deploy="/tmp/hossein_experiments" local="$PROJECT_DIR$" web="/" />
+            <mapping deploy="/tmp/pycharm_project_675" local="$PROJECT_DIR$" />
           </mappings>
         </serverdata>
       </paths>
-      <paths name="DL1@192.168.20.125:22">
+      <paths name="mila_gomrokchi">
         <serverdata>
           <mappings>
-            <mapping deploy="/tmp/hossein_experiment" local="$PROJECT_DIR$" web="/" />
+            <mapping deploy="/network/home/gomrokma/nips_paper" local="$PROJECT_DIR$" web="/" />
           </mappings>
         </serverdata>
       </paths>
-      <paths name="DL2@192.168.20.124:22">
+      <paths name="samin11@agent-server-1.cs.mcgill.ca:22">
         <serverdata>
           <mappings>
-            <mapping deploy="/tmp/hossein_experiments" local="$PROJECT_DIR$" web="/" />
+            <mapping deploy="/home/ml/samin11/pycharm_hossein" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="samin11@agent-server-2.cs.mcgill.ca:22">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/tmp/susan/pycharm_hossein" local="$PROJECT_DIR$" web="/" />
           </mappings>
         </serverdata>
       </paths>
