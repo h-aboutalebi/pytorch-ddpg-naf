@@ -105,6 +105,8 @@ parser.add_argument('--poly_rl_exploration_flag', action='store_true',
 
 parser.add_argument('--param_noise', action='store_true')
 
+parser.add_argument('--param_noise_initial_stdev', type=float, default=0.05)
+
 parser.add_argument('--diverse_noise', action='store_true')
 
 parser.add_argument('--linear_diverse_noise', action='store_true')
@@ -135,7 +137,7 @@ parser.add_argument('--lambda_', type=float, default=0.035)
 # retrieve arguments set by the user
 args = parser.parse_args()
 
-param_noise = AdaptiveParamNoiseSpec(initial_stddev=0.05,
+param_noise = AdaptiveParamNoiseSpec(initial_stddev=args.param_noise_initial_stdev,
     desired_action_stddev=args.noise_scale, adaptation_coefficient=1.05) if args.param_noise else None
 
 # configuring logging
@@ -149,7 +151,8 @@ logging.getLogger().addHandler(logging.StreamHandler())
 logger.info("=================================================================================")
 Config_exeriment = "\n Experiment Configuration:\n*Algorithm: " + str(args.algo) + "\n*Output_path result: " + \
                    str(args.output_path) + "\n*Param noise Flag: " + \
-                   str(args.param_noise) + "\n*linear_diverse_noise Flag: " + \
+                   str(args.param_noise) + "\n*Param noise initial stdev: " + \
+                   str(args.param_noise_initial_stdev) +"\n*linear_diverse_noise Flag: " + \
                    str(args.linear_diverse_noise)+ "\n*linear_diverse_noise phi: " + \
                    str(args.phi) + "\n*Diverse noise Flag: " + \
                    str(args.diverse_noise) +"\n*sparse_reward: " + str(
