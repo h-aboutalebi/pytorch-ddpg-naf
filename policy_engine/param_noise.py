@@ -28,6 +28,7 @@ class AdaptiveParamNoiseSpec(object):
         else:
             # Increase stddev.
             self.current_stddev *= self.adaptation_coefficient
+        print(self.current_stddev)
 
     def get_stats(self):
         stats = {
