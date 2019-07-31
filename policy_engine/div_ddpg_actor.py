@@ -109,6 +109,7 @@ class Critic(nn.Module):
 
 class DivDDPGActor(object):
     def __init__(self, gamma, tau, hidden_size, num_inputs, action_space,lr_critic,lr_actor,phi=0.999,linear_flag=False):
+        self.number_of_time_target_policy_is_called = 0
         self.alpha=1
         self.linear_flag=linear_flag
         self.phi=phi

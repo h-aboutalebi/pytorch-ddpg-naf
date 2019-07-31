@@ -110,7 +110,7 @@ class Critic(nn.Module):
 
 class DDPG(object):
     def __init__(self, gamma, tau, hidden_size, poly_rl_exploration_flag,num_inputs, action_space,lr_critic,lr_actor):
-
+        self.number_of_time_target_policy_is_called=0
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.poly_rl_alg=None
         self.num_inputs = num_inputs
@@ -148,6 +148,7 @@ class DDPG(object):
             return mu.clamp(-1, 1)
         else:
             mu=self.poly_rl_alg.select_action(state,previous_action,tensor_board_writer=tensor_board_writer,step_number=step_number)
+            self.number_of_time_target_policy_is_called = self.poly_rl_alg.number_of_time_target_policy_is_called
             return mu.clamp(-1, 1)
 
     def perturb_actor_parameters(self, param_noise):

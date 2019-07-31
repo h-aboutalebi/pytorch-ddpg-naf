@@ -214,7 +214,7 @@ rewards = []
 total_numsteps_episode = 0
 total_numsteps = 0
 updates = 0
-Final_results = {"reward": [],"modified_reward":[]}
+Final_results = {"reward": [],"modified_reward":[],"poly_rl_ratio":{"ratio":[],"step_number":[],"epoch":[]}}
 start_time = time.time()
 for i_episode in range(args.num_episodes):
     total_numsteps_episode = 0
@@ -278,6 +278,10 @@ for i_episode in range(args.num_episodes):
         ddpg_dist = ddpg_distance_metric(perturbed_actions.numpy(), unperturbed_actions.numpy())
         param_noise.adapt(ddpg_dist)
 
+    if (args.poly_rl_exploration_flag):
+        Final_results["poly_rl_ratio"]["ratio"].append(agent.number_of_time_target_policy_is_called)
+        Final_results["step_number"].append(total_numsteps)
+        Final_results["epoch"].append(i_episode)
 
     # This section is for computing the target policy perfomance
     # The environment is reset every 10 episodes automatically and we compute the target policy reward.
@@ -306,6 +310,7 @@ for i_episode in range(args.num_episodes):
         time_len = time.time() - start_time
         start_time = time.time()
         rewards.append(episode_reward)
+
         Final_results["reward"].append(episode_reward)
         Final_results["modified_reward"].append(episode_modified_reward)
         last_x_body = env.env.body_xyz[0]
