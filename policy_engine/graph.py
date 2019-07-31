@@ -13,7 +13,7 @@ class Create_Graph:
         self.Number_of_iteration =  Number_of_iteration
         self.max_x_number = max_x_number
         self.min_x_number = min_x_number
-        string_directory="/Users/hosseinaboutalebi/Desktop/Git_hub/pytorch-ddpg-naf/files_non_sparce"
+        string_directory="/home/hosseinaboutalebi/PycharmProjects/pytorch-ddpg-naf/files_non_sparce"
         self.x_values = [i for i in range(0, max_x_number, 10)]
         PolyRL_result = [[] for _ in range(Number_of_iteration)]
         ParamNoise_result = [[] for _ in range(Number_of_iteration)]
@@ -51,6 +51,7 @@ class Create_Graph:
         error_Div_Dis_result_result = stats.sem(Div_Dis_result, axis=0)
         plt.xlabel('Episodes')
         plt.ylabel('Reward')
+        plt.yscale('log')
         plt.plot(self.x_new_values, y_PolyRL_result[0], "b",label='DDPG with PolyRL')
         plt.plot(self.x_new_values, y_ParamNoise_result[0], "r", label='DDPG with Parameter Noise')
         plt.plot( self.x_new_values, y_DDPG_result[0], "g", label='DDPG')
@@ -67,7 +68,8 @@ class Create_Graph:
         plt.fill_between(self.x_new_values, y_Div_Dis_result[0] - error_Div_Dis_result_result[0], y_Div_Dis_result[0] + error_Div_Dis_result_result[0], edgecolor='#3F7F4C',
                          facecolor='#3F7F4C', alpha=0.5,
                          linewidth=0)
-
+        axes = plt.gca()
+        axes.set_ylim([0, 100])
         plt.show()
 
 Create_Graph(Number_of_iteration=2)

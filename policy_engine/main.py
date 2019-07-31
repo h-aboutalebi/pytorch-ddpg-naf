@@ -63,7 +63,7 @@ parser.add_argument('--reward_negative', action='store_false',
 parser.add_argument('--num_steps', type=int, default=1000, metavar='N',
                     help='max episode length (default: 1000)')
 
-parser.add_argument('--num_episodes', type=int, default=1000, metavar='N',
+parser.add_argument('--num_episodes', type=int, default=2000, metavar='N',
                     help='number of episodes (default: 1000)')
 
 parser.add_argument('--updates_per_step', type=int, default=5, metavar='N',
@@ -261,6 +261,8 @@ for i_episode in range(args.num_episodes):
                 batch = Transition(*zip(*transitions))
                 value_loss, policy_loss = agent.update_parameters(batch, tensor_board_writer=writer,
                                                                   episode_number=i_episode)
+                if args.param_noise and args.algo == "DDPG":
+                    agent.perturb_actor_parameters(param_noise)
                 updates += 1
         # if the environemnt should be reset, we break
         if done or flag_absorbing_state:
