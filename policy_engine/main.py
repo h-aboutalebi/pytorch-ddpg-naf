@@ -261,6 +261,8 @@ for i_episode in range(args.num_episodes):
                 batch = Transition(*zip(*transitions))
                 value_loss, policy_loss = agent.update_parameters(batch, tensor_board_writer=writer,
                                                                   episode_number=i_episode)
+                if args.param_noise and args.algo == "DDPG":
+                    agent.perturb_actor_parameters(param_noise)
                 updates += 1
         # if the environemnt should be reset, we break
         if done or flag_absorbing_state:
