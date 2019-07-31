@@ -159,8 +159,8 @@ class DDPG(object):
         for name in params:
             if 'ln' in name:
                 pass
-            param = params[name]
-            param += torch.randn(param.shape).to(self.device) * param_noise.current_stddev
+            param = params[name].to(self.device)
+            param += torch.randn(param.shape) * param_noise.current_stddev
 
     #This function samples from target policy for test
     def select_action_from_target_actor(self,state):
