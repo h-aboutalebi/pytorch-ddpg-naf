@@ -198,8 +198,6 @@ else:
 
 poly_rl_alg = None
 
-if args.param_noise and args.algo == "DDPG":
-        agent.perturb_actor_parameters(param_noise)
 
 if (args.poly_rl_exploration_flag):
     poly_rl_alg = PolyRL(gamma=args.gamma, betta=args.betta, epsilon=args.epsilon, sigma_squared=args.sigma_squared,
