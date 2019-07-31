@@ -10,6 +10,14 @@
           <option name="port" value="8001" />
         </fileTransfer>
       </webServer>
+      <webServer id="68cc1642-1f80-484c-8033-807e4d43ef98" name="agent-server-1.mcgill.ca" url="http://agent-server-1.cs.mcgill.ca">
+        <fileTransfer host="agent-server-1.cs.mcgill.ca" port="22" accessType="SFTP">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+          <option name="port" value="22" />
+        </fileTransfer>
+      </webServer>
     </option>
   </component>
 </project>

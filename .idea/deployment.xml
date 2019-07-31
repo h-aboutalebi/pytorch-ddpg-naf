@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" autoUpload="Always" serverName="samin11@agent-server-2.cs.mcgill.ca:22" showNewOnTargetInSync="false">
+  <component name="PublishConfigData" autoUpload="Always" showNewOnTargetInSync="false">
     <serverData>
-      <paths name="gomrokma@login-1.server.mila.quebec:8001">
+      <paths name="agent-server-1.mcgill.ca">
         <serverdata>
           <mappings>
-            <mapping deploy="/tmp/pycharm_project_675" local="$PROJECT_DIR$" />
+            <mapping deploy="/home/ml/habout/Pycharm_hossein" local="$PROJECT_DIR$" web="/" />
           </mappings>
         </serverdata>
       </paths>
@@ -19,14 +19,7 @@
       <paths name="samin11@agent-server-1.cs.mcgill.ca:22">
         <serverdata>
           <mappings>
-            <mapping deploy="/home/ml/samin11/pycharm_hossein" local="$PROJECT_DIR$" />
-          </mappings>
-        </serverdata>
-      </paths>
-      <paths name="samin11@agent-server-2.cs.mcgill.ca:22">
-        <serverdata>
-          <mappings>
-            <mapping deploy="/tmp/susan/pycharm_hossein" local="$PROJECT_DIR$" web="/" />
+            <mapping deploy="/home/ml/habout/Pycharm_hossein" local="$PROJECT_DIR$" />
           </mappings>
         </serverdata>
       </paths>
