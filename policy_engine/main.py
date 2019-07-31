@@ -277,7 +277,6 @@ for i_episode in range(args.num_episodes):
 
         ddpg_dist = ddpg_distance_metric(perturbed_actions.numpy(), unperturbed_actions.numpy())
         param_noise.adapt(ddpg_dist)
-        agent.perturb_actor_parameters(param_noise)
 
 
     # This section is for computing the target policy perfomance
