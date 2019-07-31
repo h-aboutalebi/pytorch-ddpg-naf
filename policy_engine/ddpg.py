@@ -69,7 +69,8 @@ class Actor(nn.Module):
         self.mu.bias.data.mul_(0.1)
 
     def forward(self, inputs):
-        x = inputs
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        x = inputs.to(device)
         x = self.linear1(x)
         x = self.ln1(x)
         x = F.relu(x)

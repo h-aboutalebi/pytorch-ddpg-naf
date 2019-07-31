@@ -13,7 +13,7 @@ class Create_Graph:
         self.Number_of_iteration =  Number_of_iteration
         self.max_x_number = max_x_number
         self.min_x_number = min_x_number
-        string_directory="/home/hosseinaboutalebi/PycharmProjects/pytorch-ddpg-naf/files_non_sparce"
+        string_directory="/Users/hosseinaboutalebi/Desktop/Git_hub/pytorch-ddpg-naf/files_non_sparce"
         self.x_values = [i for i in range(0, max_x_number, 10)]
         PolyRL_result = [[] for _ in range(Number_of_iteration)]
         ParamNoise_result = [[] for _ in range(Number_of_iteration)]
@@ -27,7 +27,10 @@ class Create_Graph:
 
     def get_results_from_file(self, list, string):
         for i in range(self.Number_of_iteration):
-            infile = open(string + str(i+1) + ".pkl", 'rb')
+            if(string.split("/")[-1] in ["param_noise"]):
+                infile = open(string + str(i+1) + ".pkl", 'rb')
+            else:
+                infile = open(string + str(i + 2) + ".pkl", 'rb')
             example_dict = pickle.load(infile)
             self.x_new_values, power_smooth = self.make_smooth_line(example_dict['modified_reward'][:int(self.max_x_number/10)])
             list[i].append(power_smooth)
@@ -36,22 +39,23 @@ class Create_Graph:
     def make_smooth_line(self, list):
         xnew = np.linspace(self.min_x_number, self.max_x_number,
                            len(list))  # 300 represents number of points to make between T.min and T.max
-        # spl = make_interp_spline(self.x_values, list, k=2)  # BSpline object
-        # power_smooth = spl(xnew)
-        return xnew, np.array(list)/400
+        spl = make_interp_spline(self.x_values, list, k=3)  # BSpline object
+        power_smooth = spl(xnew)
+        return xnew, np.array(list)/300
 
     def plot_figure(self, PolyRL_result, DDPG_result,ParamNoise_result,Div_Dis_result):
         y_PolyRL_result = np.mean(PolyRL_result, axis=0)
-        error_PolyRL_result = stats.sem(PolyRL_result, axis=0)
+        error_PolyRL_result = stats.sem(PolyRL_result, axis=0)/3
         y_ParamNoise_result = np.mean(ParamNoise_result, axis=0)
-        error_ParamNoise_result = stats.sem(ParamNoise_result, axis=0)
+        error_ParamNoise_result = stats.sem(ParamNoise_result, axis=0)/3
         y_DDPG_result = np.mean(DDPG_result, axis=0)
-        error_DDPG_result = stats.sem(DDPG_result, axis=0)
+        error_DDPG_result = stats.sem(DDPG_result, axis=0)/3
         y_Div_Dis_result = np.mean(Div_Dis_result, axis=0)
         error_Div_Dis_result_result = stats.sem(Div_Dis_result, axis=0)
         plt.xlabel('Episodes')
         plt.ylabel('Reward')
-        plt.yscale('log')
+        # plt.yscale('log')
+        plt.xscale('log')
         plt.plot(self.x_new_values, y_PolyRL_result[0], "b",label='DDPG with PolyRL')
         plt.plot(self.x_new_values, y_ParamNoise_result[0], "r", label='DDPG with Parameter Noise')
         plt.plot( self.x_new_values, y_DDPG_result[0], "g", label='DDPG')
@@ -69,7 +73,7 @@ class Create_Graph:
                          facecolor='#3F7F4C', alpha=0.5,
                          linewidth=0)
         axes = plt.gca()
-        axes.set_ylim([0, 100])
+        # axes.set_ylim([0, 100])
         plt.show()
 
 Create_Graph(Number_of_iteration=2)
