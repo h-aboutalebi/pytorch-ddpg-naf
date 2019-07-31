@@ -275,7 +275,7 @@ for i_episode in range(args.num_episodes):
         unperturbed_actions = agent.select_action(states, None, None)
         perturbed_actions = torch.cat([transition[1] for transition in episode_transitions], 0)
 
-        ddpg_dist = ddpg_distance_metric(perturbed_actions.numpy(), unperturbed_actions.numpy())
+        ddpg_dist = ddpg_distance_metric(perturbed_actions.cpu().numpy(), unperturbed_actions.cpu().numpy())
         param_noise.adapt(ddpg_dist)
 
     if (args.poly_rl_exploration_flag):
