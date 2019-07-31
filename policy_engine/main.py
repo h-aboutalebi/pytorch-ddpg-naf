@@ -280,8 +280,9 @@ for i_episode in range(args.num_episodes):
 
     if (args.poly_rl_exploration_flag):
         Final_results["poly_rl_ratio"]["ratio"].append(agent.number_of_time_target_policy_is_called)
-        Final_results["step_number"].append(total_numsteps)
-        Final_results["epoch"].append(i_episode)
+        Final_results["poly_rl_ratio"]["step_number"].append(total_numsteps)
+        Final_results["poly_rl_ratio"]["epoch"].append(i_episode)
+    # print(Final_results)
 
     # This section is for computing the target policy perfomance
     # The environment is reset every 10 episodes automatically and we compute the target policy reward.
