@@ -8,7 +8,7 @@ import pickle
 logger = logging.getLogger(__name__)
 import sys
 
-sys.path.insert(0,"/home/hossain_aboutalebi_gmail_com/pytorch-ddpg-naf")
+sys.path.insert(0, "/home/hossain_aboutalebi_gmail_com/pytorch-ddpg-naf")
 
 # Important Note: for running on server you should specify the python project directory ...
 # ...the project may contain multiple directories. This should be set manually.
@@ -63,7 +63,7 @@ parser.add_argument('--reward_negative', action='store_false',
 parser.add_argument('--num_steps', type=int, default=1000, metavar='N',
                     help='max episode length (default: 1000)')
 
-parser.add_argument('--num_episodes', type=int, default=2000, metavar='N',
+parser.add_argument('--num_episodes', type=int, default=1000, metavar='N',
                     help='number of episodes (default: 1000)')
 
 parser.add_argument('--updates_per_step', type=int, default=5, metavar='N',
@@ -93,7 +93,6 @@ parser.add_argument('--ou_noise', type=bool, default=True,
                     help="This is the noise used for the pure version DDPG (without poly_rl_exploration)"
                          " where the behavioural policy has perturbation in only mean of target policy")
 
-
 parser.add_argument('--noise_scale', type=float, default=0.3, metavar='G',
                     help='initial noise scale (default: 0.3)')
 
@@ -105,14 +104,13 @@ parser.add_argument('--poly_rl_exploration_flag', action='store_true',
 
 parser.add_argument('--param_noise', action='store_true')
 
-parser.add_argument('--param_noise_initial_stdev', type=float, default=0.05)
+parser.add_argument('--param_noise_initial_stdev', type=float, default=1e-4)
 
 parser.add_argument('--diverse_noise', action='store_true')
 
 parser.add_argument('--linear_diverse_noise', action='store_true')
 
-parser.add_argument('--phi', type=float, default=0.99)
-
+parser.add_argument('--phi', type=float, default=0.5)
 
 parser.add_argument('--exploration_end', type=int, default=100, metavar='N',
                     help='number of episodes with noise (default: 100)')
@@ -138,7 +136,7 @@ parser.add_argument('--lambda_', type=float, default=0.035)
 args = parser.parse_args()
 
 param_noise = AdaptiveParamNoiseSpec(initial_stddev=args.param_noise_initial_stdev,
-    desired_action_stddev=args.noise_scale, adaptation_coefficient=1.05) if args.param_noise else None
+                                     desired_action_stddev=args.noise_scale, adaptation_coefficient=1.05) if args.param_noise else None
 
 # configuring logging
 file_path_results = args.output_path + "/" + str(datetime.datetime.now()).replace(" ", "_")
@@ -148,28 +146,15 @@ os.mkdir(file_path_results)
 logging.basicConfig(level=logging.INFO, filename=file_path_results + "/log.txt")
 logging.getLogger().addHandler(logging.StreamHandler())
 
-logger.info("=================================================================================")
-Config_exeriment = "\n Experiment Configuration:\n*Algorithm: " + str(args.algo) + "\n*Output_path result: " + \
-                   str(args.output_path) + "\n*Param noise Flag: " + \
-                   str(args.param_noise) + "\n*Param noise initial stdev: " + \
-                   str(args.param_noise_initial_stdev) +"\n*linear_diverse_noise Flag: " + \
-                   str(args.linear_diverse_noise)+ "\n*linear_diverse_noise phi: " + \
-                   str(args.phi) + "\n*Diverse noise Flag: " + \
-                   str(args.diverse_noise) +"\n*sparse_reward: " + str(
-    args.sparse_reward) + "\n*Environment Name: " + str(
-    args.env_name) + \
-                   "\n*Gamma " + str(args.gamma) + "\n*Max episode steps length: " + str(
-    args.num_steps) + "\n*Number of episodes: " \
-                   + str(args.num_episodes) + "\n*Tau: " + str(args.tau) + "\n*Learning rate of critic net: " + str(
-    args.lr_critic) + "\n*Learning rate of actor net: " \
-                   + str(args.lr_actor) + "\n*PolyRL flag: " + str(
-    args.poly_rl_exploration_flag) + "\n*Betta of PolyRL: " + str(args.betta) \
-                   + "\n*Epsilon of PolyRL: " + str(args.epsilon) + "\n*sigma_squared of PolyRL: " + str(
-    args.sigma_squared) + "\n*Lambda of PolyRL: " + str(
-    args.lambda_) + "\n*Threshold of sparcity start in rewards: " + str(args.threshold_sparcity) + \
-                   "\n*Reward negative has been activated: " + str(args.reward_negative)
-logger.info(Config_exeriment)
-logger.info("=================================================================================")
+header = "===================== Experiment configuration ========================"
+logger.info(header)
+args_keys = list(vars(args).keys())
+args_keys.sort()
+max_k = len(max(args_keys, key=lambda x: len(x)))
+for k in args_keys:
+    s = k + '.' * (max_k - len(k)) + ': %s' % repr(getattr(args, k))
+    logger.info(s + ' ' * max((len(header) - len(s), 0)))
+logger.info("=" * len(header))
 
 env = gym.make(args.env_name)
 
@@ -187,8 +172,8 @@ np.random.seed(args.seed)
 # currently we only support DDPG. TODO: implement other algorithms for future
 if args.diverse_noise is True or args.linear_diverse_noise is True:
     agent = DivDDPGActor(gamma=args.gamma, tau=args.tau, hidden_size=args.hidden_size,
-                 num_inputs=env.observation_space.shape[0], action_space=env.action_space,
-                 lr_actor=args.lr_actor, lr_critic=args.lr_critic,phi=args.phi,linear_flag=args.linear_diverse_noise)
+                         num_inputs=env.observation_space.shape[0], action_space=env.action_space,
+                         lr_actor=args.lr_actor, lr_critic=args.lr_critic, phi=args.phi, linear_flag=args.linear_diverse_noise)
 
 else:
     agent = DDPG(gamma=args.gamma, tau=args.tau, hidden_size=args.hidden_size,
@@ -197,7 +182,6 @@ else:
                  lr_actor=args.lr_actor, lr_critic=args.lr_critic)
 
 poly_rl_alg = None
-
 
 if (args.poly_rl_exploration_flag):
     poly_rl_alg = PolyRL(gamma=args.gamma, betta=args.betta, epsilon=args.epsilon, sigma_squared=args.sigma_squared,
@@ -214,7 +198,7 @@ rewards = []
 total_numsteps_episode = 0
 total_numsteps = 0
 updates = 0
-Final_results = {"reward": [],"modified_reward":[],"poly_rl_ratio":{"ratio":[],"step_number":[],"epoch":[]}}
+Final_results = {"reward": [], "modified_reward": [], "poly_rl_ratio": {"ratio": [], "step_number": [], "epoch": []}}
 start_time = time.time()
 for i_episode in range(args.num_episodes):
     total_numsteps_episode = 0
@@ -236,7 +220,7 @@ for i_episode in range(args.num_episodes):
     while (counter < args.num_steps):
         total_numsteps += 1
         action = agent.select_action(state=state, action_noise=ounoise, previous_action=previous_action, tensor_board_writer=writer,
-                                     step_number=total_numsteps,param_noise=param_noise)
+                                     step_number=total_numsteps, param_noise=param_noise)
         previous_action = action
         next_state, reward, done, info_ = env.step(action.cpu().numpy()[0])
         total_numsteps_episode += 1
@@ -244,8 +228,9 @@ for i_episode in range(args.num_episodes):
         action = torch.Tensor(action.cpu())
         mask = torch.Tensor([not done])
         next_state = torch.Tensor([next_state])
-        modified_reward,flag_absorbing_state = make_reward_sparse(env=env, flag_sparse=args.sparse_reward, reward=reward,
-                                             threshold_sparcity=args.threshold_sparcity, negative_reward_flag=args.reward_negative,num_steps=args.num_steps)
+        modified_reward, flag_absorbing_state = make_reward_sparse(env=env, flag_sparse=args.sparse_reward, reward=reward,
+                                                                   threshold_sparcity=args.threshold_sparcity,
+                                                                   negative_reward_flag=args.reward_negative, num_steps=args.num_steps)
         modified_reward = torch.Tensor([modified_reward])
         memory.push(state, action, mask, next_state, modified_reward)
         previous_state = state
@@ -299,7 +284,7 @@ for i_episode in range(args.num_episodes):
                                                                        threshold_sparcity=args.threshold_sparcity,
                                                                        negative_reward_flag=args.reward_negative, num_steps=args.num_steps)
 
-            episode_modified_reward+=modified_reward
+            episode_modified_reward += modified_reward
             next_state = torch.Tensor([next_state])
             state = next_state
             if done or flag_absorbing_state:
@@ -320,6 +305,6 @@ for i_episode in range(args.num_episodes):
             "Episode: {}, time:{}, numsteps in the episode: {}, total steps so far: {}, x_body: {}, reward: {}, modified_reward {}".format(
                 i_episode, time_len, total_numsteps_episode, total_numsteps, last_x_body, episode_reward, episode_modified_reward))
 
-    with open(file_path_results + '/result_reward.pkl', 'wb') as handle:
+    with open(file_path_results + '/result_reward0.pkl', 'wb') as handle:
         pickle.dump(Final_results, handle)
 env.close()
