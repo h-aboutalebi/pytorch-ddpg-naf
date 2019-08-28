@@ -48,7 +48,7 @@ parser.add_argument('--sparse_reward', action='store_false',
 parser.add_argument('--threshold_sparcity', type=float, default=1.15, metavar='G',
                     help='threshold_sparcity for rewards (default: 0.15)')
 
-parser.add_argument('--env_name', default="RoboschoolHalfCheetah-v1",
+parser.add_argument('--env_name', default="RoboschoolHopper-v1",
                     help='name of the environment to run')
 
 parser.add_argument('--gamma', type=float, default=0.99, metavar='G',
