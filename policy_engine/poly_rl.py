@@ -4,6 +4,7 @@ import numpy as np
 import torch
 import logging
 logger = logging.getLogger(__name__)
+import random
 
 
 # implements the PolyRL algorithm
@@ -40,10 +41,21 @@ class PolyRL():
         self.w_old = torch.zeros(1, env.observation_space.shape[0])
         self.w_new = torch.zeros(1, env.observation_space.shape[0])
         self.eta = None
+        self.should_use_target_policy=False
 
     def select_action(self, state, previous_action,tensor_board_writer,step_number):
         self.Update_variable = True
-        if (self.t == 0):
+        if (self.should_use_target_policy is True):
+            k=random.uniform(0, 1)
+            if(k<=self.epsilon):
+                self.number_of_time_target_policy_is_called += 1
+                tensor_board_writer.add_scalar('number_of_time_target_policy__exploration_is_called', self.number_of_time_target_policy_is_called,
+                                               step_number)
+                action = self.actor_target_function(state)
+                return action
+            else:
+                self.should_use_target_policy = True
+        elif (self.t == 0):
             return torch.FloatTensor(1, self.env.action_space.shape[0]).uniform_(self.min_action_limit, self.max_action_limit)
 
         elif (((self.delta_g < self.U) and (self.delta_g > self.L) and (self.C_theta>0)) or self.i==1):
@@ -56,11 +68,13 @@ class PolyRL():
             action = self.actor_target_function(state)
             self.reset_parameters_PolyRL()
             self.Update_variable = False
+            self.should_use_target_policy = True
             return action
 
     # This function resets parameters of PolyRl every episode. Should be called in the beggining of every episode
     def reset_parameters_in_beginning_of_episode(self,episode_number):
-        self.epsilon = 1 / ( 1 + self.betta) ** (np.log(episode_number) ** 8 )
+        self.should_use_target_policy=False
+        self.epsilon = 1 - np.exp(-self.betta*episode_number)
         self.i = 1
         self.g = 0
         self.C_vector = torch.zeros(1, self.env.observation_space.shape[0])
