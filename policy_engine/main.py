@@ -201,6 +201,7 @@ Final_results = {"reward": [], "modified_reward": [], "poly_rl_ratio": {"ratio":
 start_time = time.time()
 state = torch.Tensor([env.reset()])
 episode_reward = 0
+initial_pose=env.env.data.qpos[0]
 while (total_numsteps < args.num_steps):
 
     if args.ou_noise:
@@ -225,7 +226,7 @@ while (total_numsteps < args.num_steps):
     next_state = torch.Tensor([next_state])
     modified_reward, flag_absorbing_state = make_reward_sparse(env=env, flag_sparse=args.sparse_reward, reward=reward,
                                                                threshold_sparcity=args.threshold_sparcity,
-                                                               negative_reward_flag=args.reward_negative, num_steps=args.num_steps)
+                                                               initial_pose=initial_pose)
     modified_reward = torch.Tensor([modified_reward])
     memory.push(state, action, mask, next_state, modified_reward)
     previous_state = state
@@ -245,6 +246,7 @@ while (total_numsteps < args.num_steps):
     # if the environemnt should be reset, we break
     if done or flag_absorbing_state:
         state = torch.Tensor([env.reset()])
+        initial_pose = env.env.data.qpos[0]
 
     writer.add_scalar('reward/train', episode_reward, total_numsteps)
     rewards.append(episode_reward)
@@ -267,6 +269,7 @@ while (total_numsteps < args.num_steps):
     # The environment is reset every 10 episodes automatically and we compute the target policy reward.
     if total_numsteps % args.eval_interval == 0:
         state = torch.Tensor([env.reset()])
+        initial_pose = env.env.data.qpos[0]
         episode_reward = 0
         episode_modified_reward = 0
         counter = 0
@@ -276,7 +279,7 @@ while (total_numsteps < args.num_steps):
             episode_reward += reward
             modified_reward, flag_absorbing_state = make_reward_sparse(env=env, flag_sparse=args.sparse_reward, reward=reward,
                                                                        threshold_sparcity=args.threshold_sparcity,
-                                                                       negative_reward_flag=args.reward_negative, num_steps=args.num_steps)
+                                                                       initial_pose=initial_pose)
 
             episode_modified_reward += modified_reward
             next_state = torch.Tensor([next_state])
