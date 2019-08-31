@@ -15,7 +15,7 @@ sys.path.insert(0, "/home/hossain_aboutalebi_gmail_com/pytorch-ddpg-naf")
 # sys.path.insert(0, '/home/hossain_aboutalebi_gmail_com/pytorch-ddpg-naf')
 
 import gym
-import roboschool
+# import roboschool
 import numpy as np
 import torch
 import os
@@ -45,10 +45,10 @@ parser.add_argument('-o', '--output_path', default=os.path.expanduser('~') + '/r
 parser.add_argument('--sparse_reward', action='store_false',
                     help='for making reward sparse. Default=True')
 
-parser.add_argument('--threshold_sparcity', type=float, default=1.15, metavar='G',
+parser.add_argument('--threshold_sparcity', type=float, default=-444441.15, metavar='G',
                     help='threshold_sparcity for rewards (default: 0.15)')
 
-parser.add_argument('--env_name', default="RoboschoolHalfCheetah-v1",
+parser.add_argument('--env_name', default="HalfCheetah-v2",
                     help='name of the environment to run')
 
 parser.add_argument('--gamma', type=float, default=0.99, metavar='G',
@@ -299,11 +299,11 @@ for i_episode in range(args.num_episodes):
 
         Final_results["reward"].append(episode_reward)
         Final_results["modified_reward"].append(episode_modified_reward)
-        last_x_body = env.env.body_xyz[0]
-        writer.add_scalar('x_body', last_x_body, i_episode)
+        # last_x_body = env.env.body_xyz[0]
+        # writer.add_scalar('x_body', last_x_body, i_episode)
         logger.info(
-            "Episode: {}, time:{}, numsteps in the episode: {}, total steps so far: {}, x_body: {}, reward: {}, modified_reward {}".format(
-                i_episode, time_len, total_numsteps_episode, total_numsteps, last_x_body, episode_reward, episode_modified_reward))
+            "Episode: {}, time:{}, numsteps in the episode: {}, total steps so far: {}, reward: {}, modified_reward {}".format(
+                i_episode, time_len, total_numsteps_episode, total_numsteps,  episode_reward, episode_modified_reward))
 
     with open(file_path_results + '/result_reward0.pkl', 'wb') as handle:
         pickle.dump(Final_results, handle)
