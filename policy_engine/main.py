@@ -16,6 +16,7 @@ sys.path.insert(0, "/home/hossain_aboutalebi_gmail_com/pytorch-ddpg-naf")
 # sys.path.insert(0, '/home/hossain_aboutalebi_gmail_com/pytorch-ddpg-naf')
 
 import gym
+# import roboschool
 import numpy as np
 import torch
 import os
@@ -45,7 +46,7 @@ parser.add_argument('-o', '--output_path', default=os.path.expanduser('~') + '/r
 parser.add_argument('--sparse_reward', action='store_false',
                     help='for making reward sparse. Default=True')
 
-parser.add_argument('--threshold_sparcity', type=float, default=1.15, metavar='G',
+parser.add_argument('--threshold_sparcity', type=float, default=-44444441.15, metavar='G',
                     help='threshold_sparcity for rewards (default: 0.15)')
 
 parser.add_argument('--env_name', default="Ant-v2",
@@ -60,14 +61,14 @@ parser.add_argument('--seed', type=int, default=4, metavar='N',
 parser.add_argument('--reward_negative', action='store_false',
                     help='Determines if we can have neagative reward (Default True)')
 
-parser.add_argument('--num_steps', type=int, default=1000, metavar='N',
+parser.add_argument('--num_steps', type=int, default=1e6, metavar='N',
                     help='max episode length (default: 1000)')
 
-parser.add_argument('--num_episodes', type=int, default=1000, metavar='N',
-                    help='number of episodes (default: 1000)')
-
-parser.add_argument('--updates_per_step', type=int, default=5, metavar='N',
+parser.add_argument('--updates_per_step', type=int, default=1, metavar='N',
                     help='model updates per simulator step (default: 5)')
+
+parser.add_argument('--eval_interval', type=float, default=5e3, metavar='G',
+                    help='discount factor for reward (default: 0.99)')
 
 # Important: batch size here is different in semantics
 parser.add_argument('--batch_size', type=int, default=128, metavar='N',
@@ -195,64 +196,60 @@ memory = ReplayMemory(args.replay_size)
 ounoise = OUNoise(env.action_space.shape[0]) if args.ou_noise else None
 
 rewards = []
-total_numsteps_episode = 0
 total_numsteps = 0
 updates = 0
 Final_results = {"reward": [], "modified_reward": [], "poly_rl_ratio": {"ratio": [], "step_number": [], "epoch": []}}
 start_time = time.time()
-for i_episode in range(args.num_episodes):
-    total_numsteps_episode = 0
-    state = torch.Tensor([env.reset()])
+state = torch.Tensor([env.reset()])
+episode_reward = 0
+initial_pose=env.env.data.qpos[0]
+while (total_numsteps < args.num_steps):
 
     if args.ou_noise:
         # I did not change the implementation of ounoise from the source! (for pure DDPG without poly_rl exploration)
         ounoise.scale = (args.noise_scale - args.final_noise_scale) * max(0, args.exploration_end -
-                                                                          i_episode) / args.exploration_end + args.final_noise_scale
+                                                                          total_numsteps) / args.exploration_end + args.final_noise_scale
         ounoise.reset()
 
     if (args.poly_rl_exploration_flag):
-        poly_rl_alg.reset_parameters_in_beginning_of_episode(i_episode + 2)
+        poly_rl_alg.reset_parameters_in_beginning_of_episode(total_numsteps + 2)
 
-    episode_reward = 0
     previous_action = None
     previous_state = state
-    counter = 0
-    while (counter < args.num_steps):
-        total_numsteps += 1
-        action = agent.select_action(state=state, action_noise=ounoise, previous_action=previous_action, tensor_board_writer=writer,
-                                     step_number=total_numsteps, param_noise=param_noise)
-        previous_action = action
-        next_state, reward, done, info_ = env.step(action.cpu().numpy()[0])
-        total_numsteps_episode += 1
-        episode_reward += reward
-        action = torch.Tensor(action.cpu())
-        mask = torch.Tensor([not done])
-        next_state = torch.Tensor([next_state])
-        modified_reward, flag_absorbing_state = make_reward_sparse(env=env, flag_sparse=args.sparse_reward, reward=reward,
-                                                                   threshold_sparcity=args.threshold_sparcity,
-                                                                   negative_reward_flag=args.reward_negative, num_steps=args.num_steps)
-        modified_reward = torch.Tensor([modified_reward])
-        memory.push(state, action, mask, next_state, modified_reward)
-        previous_state = state
-        state = next_state
-        if (args.poly_rl_exploration_flag and poly_rl_alg.Update_variable):
-            poly_rl_alg.update_parameters(previous_state=previous_state, new_state=state, tensor_board_writer=writer)
+    total_numsteps += 1
+    action = agent.select_action(state=state, action_noise=ounoise, previous_action=previous_action, tensor_board_writer=writer,
+                                 step_number=total_numsteps, param_noise=param_noise)
+    previous_action = action
+    next_state, reward, done, info_ = env.step(action.cpu().numpy()[0])
+    episode_reward += reward
+    action = torch.Tensor(action.cpu())
+    mask = torch.Tensor([not done])
+    next_state = torch.Tensor([next_state])
+    modified_reward, flag_absorbing_state = make_reward_sparse(env=env, flag_sparse=args.sparse_reward, reward=reward,
+                                                               threshold_sparcity=args.threshold_sparcity,
+                                                               initial_pose=initial_pose)
+    modified_reward = torch.Tensor([modified_reward])
+    memory.push(state, action, mask, next_state, modified_reward)
+    previous_state = state
+    state = next_state
+    if (args.poly_rl_exploration_flag and poly_rl_alg.Update_variable):
+        poly_rl_alg.update_parameters(previous_state=previous_state, new_state=state, tensor_board_writer=writer)
 
-        if len(memory) > args.batch_size:
-            for _ in range(args.updates_per_step):
-                transitions = memory.sample(args.batch_size)
-                batch = Transition(*zip(*transitions))
-                value_loss, policy_loss = agent.update_parameters(batch, tensor_board_writer=writer,
-                                                                  episode_number=i_episode)
-                if args.param_noise and args.algo == "DDPG":
-                    agent.perturb_actor_parameters(param_noise)
-                updates += 1
-        # if the environemnt should be reset, we break
-        if done or flag_absorbing_state:
-            break
-        counter += 1
+    if len(memory) > args.batch_size:
+        for _ in range(args.updates_per_step):
+            transitions = memory.sample(args.batch_size)
+            batch = Transition(*zip(*transitions))
+            value_loss, policy_loss = agent.update_parameters(batch, tensor_board_writer=writer,
+                                                              episode_number=total_numsteps)
+            if args.param_noise and args.algo == "DDPG":
+                agent.perturb_actor_parameters(param_noise)
+            updates += 1
+    # if the environemnt should be reset, we break
+    if done or flag_absorbing_state:
+        state = torch.Tensor([env.reset()])
+        initial_pose = env.env.data.qpos[0]
 
-    writer.add_scalar('reward/train', episode_reward, i_episode)
+    writer.add_scalar('reward/train', episode_reward, total_numsteps)
     rewards.append(episode_reward)
     if args.param_noise:
         episode_transitions = memory.memory[memory.position - counter:memory.position]
@@ -266,13 +263,14 @@ for i_episode in range(args.num_episodes):
     if (args.poly_rl_exploration_flag):
         Final_results["poly_rl_ratio"]["ratio"].append(agent.number_of_time_target_policy_is_called)
         Final_results["poly_rl_ratio"]["step_number"].append(total_numsteps)
-        Final_results["poly_rl_ratio"]["epoch"].append(i_episode)
+        Final_results["poly_rl_ratio"]["epoch"].append(total_numsteps)
     # print(Final_results)
 
     # This section is for computing the target policy perfomance
     # The environment is reset every 10 episodes automatically and we compute the target policy reward.
-    if i_episode % 10 == 0:
+    if total_numsteps % args.eval_interval == 0:
         state = torch.Tensor([env.reset()])
+        initial_pose = env.env.data.qpos[0]
         episode_reward = 0
         episode_modified_reward = 0
         counter = 0
@@ -282,7 +280,7 @@ for i_episode in range(args.num_episodes):
             episode_reward += reward
             modified_reward, flag_absorbing_state = make_reward_sparse(env=env, flag_sparse=args.sparse_reward, reward=reward,
                                                                        threshold_sparcity=args.threshold_sparcity,
-                                                                       negative_reward_flag=args.reward_negative, num_steps=args.num_steps)
+                                                                       initial_pose=initial_pose)
 
             episode_modified_reward += modified_reward
             next_state = torch.Tensor([next_state])
@@ -291,8 +289,8 @@ for i_episode in range(args.num_episodes):
                 break
             counter += 1
 
-        writer.add_scalar('real_reward/test', episode_reward, i_episode)
-        writer.add_scalar('reward_modified/test', episode_modified_reward, i_episode)
+        writer.add_scalar('real_reward/test', episode_reward, total_numsteps)
+        writer.add_scalar('reward_modified/test', episode_modified_reward, total_numsteps)
         time_len = time.time() - start_time
         start_time = time.time()
         rewards.append(episode_reward)
@@ -302,8 +300,8 @@ for i_episode in range(args.num_episodes):
         # last_x_body = env.env.body_xyz[0]
         # writer.add_scalar('x_body', last_x_body, i_episode)
         logger.info(
-            "Episode: {}, time:{}, numsteps in the episode: {}, total steps so far: {}, reward: {}, modified_reward {}".format(
-                i_episode, time_len, total_numsteps_episode, total_numsteps,  episode_reward, episode_modified_reward))
+            " time:{}, total steps so far: {}, reward: {}, modified_reward {}".format(
+                 time_len, total_numsteps,  episode_reward, episode_modified_reward))
 
     with open(file_path_results + '/result_reward0.pkl', 'wb') as handle:
         pickle.dump(Final_results, handle)
